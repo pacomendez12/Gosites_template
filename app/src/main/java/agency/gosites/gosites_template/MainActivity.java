@@ -7,12 +7,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.webkit.ConsoleMessage;
 import android.webkit.DownloadListener;
 import android.webkit.URLUtil;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -33,8 +37,8 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
     private WebView mWebview = null;
 
-    private final String[] internalDomains = {"cbta31mascota"};
-    private final String theUrl = "https://cbta31mascota.edu.mx";
+    private final String[] internalDomains = {"https://clientes.tellusco.mx"};
+    private final String theUrl = "https://clientes.tellusco.mx";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -50,8 +54,13 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }*/
+
         mWebview = findViewById(R.id.mainwebview);
         mWebview.getSettings().setJavaScriptEnabled(true);
+        mWebview.getSettings().setDomStorageEnabled(true);
         mWebview.setDownloadListener(new DownloadListener() {
             final BroadcastReceiver onComplete = new BroadcastReceiver() {
                 @Override
@@ -76,6 +85,15 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        mWebview.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d("MyApplication", consoleMessage.message() + " -- From line " +
+                        consoleMessage.lineNumber() + " of " + consoleMessage.sourceId());
+                return true;
+            }
+        });
+
         mWebview.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -86,12 +104,13 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (Arrays.stream(internalDomains).anyMatch(url::contains)) {
-                    view.loadUrl(url);
+                    //view.loadUrl(url);
+                    return false;
                 } else {
                     Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
                     startActivity(intent);
+                    return true;
                 }
-                return true;
             }
         });
 

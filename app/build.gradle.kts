@@ -7,7 +7,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "agency.gosites.gosites_template"
+        applicationId = "agency.gosites.algo"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Gosites_template"
+rootProject.name = "algo"
 include(":app")
  
