@@ -80,7 +80,11 @@ public class MainActivity extends AppCompatActivity {
                 dm.enqueue(request);
                 Toast.makeText(getApplicationContext(), "Descargando archivo...", Toast.LENGTH_SHORT).show();
 
-                registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_NOT_EXPORTED);
+                } else {
+                    registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+                }
             }
 
         });
@@ -104,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (Arrays.stream(internalDomains).anyMatch(url::contains)) {
-                    //view.loadUrl(url);
                     return false;
                 } else {
                     Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
@@ -115,16 +118,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         SwipeRefreshLayout swipeRefreshLayout = findViewById(R.id.swipe);
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                swipeRefreshLayout.setRefreshing(true);
-                new Handler().postDelayed(() -> {
-                    swipeRefreshLayout.setRefreshing(false);
-                    String url = mWebview.getUrl() != null ? mWebview.getUrl() : theUrl;
-                    mWebview.loadUrl(url);
-                }, 500);
-            }
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            swipeRefreshLayout.setRefreshing(true);
+            new Handler().postDelayed(() -> {
+                swipeRefreshLayout.setRefreshing(false);
+                String url = mWebview.getUrl() != null ? mWebview.getUrl() : theUrl;
+                mWebview.loadUrl(url);
+            }, 500);
         });
 
         swipeRefreshLayout.setColorSchemeColors(
@@ -148,6 +148,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mWebview.restoreState(savedInstanceState);
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -165,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkDownloadPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            Toast.makeText(MainActivity.this, "Write External Storage permission allows us to save files. Please allow this permission in App Settings.", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "El permiso de escritura en memoria es necesario para guardar archivos, por favor permita este permiso", Toast.LENGTH_LONG).show();
         } else {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
         }
